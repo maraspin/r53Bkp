@@ -39,6 +39,10 @@ $s_localFile = null;
 
 $as_credentials = array();
 
+$s_message = "Valid params for ".$argv[0]." are: --domain [--file |" .
+             " --bucket --location=" . S3_DEFAULT_BUCKET_PATH .
+             "] --overwrite\n";
+
 $i_argv = count($argv);
 for ($x = 0; $x < $i_argv; $x++) {
 
@@ -46,13 +50,13 @@ for ($x = 0; $x < $i_argv; $x++) {
 
 	switch ($s_argvParam) {
 
-		case '-f':
-		case '--force':
+		case '-o':
+		case '--overwrite':
 			$b_forceFileOverWrite = true;
 			break;
 
-		case '-o':
-		case '--outputFile':
+		case '-f':
+		case '--file':
 			$s_localFile = $argv[$x+1];
 			$x++;
 			break;
@@ -77,9 +81,7 @@ for ($x = 0; $x < $i_argv; $x++) {
 
 		default:
 			if ($x > 0) {
-				echo "Valid params for ".$argv[0]." are: --domain [--outputfile |" .
-				     " --bucket --location=" . S3_DEFAULT_BUCKET_PATH .
-				     "] --force\n";
+				echo $s_message;
 				exit;
 			}
 
@@ -89,14 +91,13 @@ for ($x = 0; $x < $i_argv; $x++) {
 if ( null === $s_domainName ||
     (null == $s_localFile && null == $s_backupBucket)
    ) {
-	echo "Valid params for ".$argv[0]." are: --domain [--outputfile | --bucket --location=" .
-	     S3_DEFAULT_BUCKET_PATH . "] --force\n";
+	echo $s_message;
 	exit;
 }
 
 if (file_exists($s_localFile) &&
 	!$b_forceFileOverWrite) {
-	throw new \Exception("File " . $s_localFile . " exists. Use -f option to overwrite");
+	throw new \Exception("File " . $s_localFile . " exists. Use -o option to overwrite");
 }
 
 $s_confFile = __DIR__ . '/aws_conf.php';
