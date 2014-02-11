@@ -15,9 +15,7 @@ try {
 	include('include/cli_app_init.php');
 
 	$am_hostedZone = $I_r53->getHostedZone(array('Id' => $s_hostedZoneId));
-
 	$i_recordCount = $am_hostedZone['HostedZone']['ResourceRecordSetCount'];
-	$i_maxItems = min($i_recordCount, 100);
 
 	$s_nextRecordName = null;
 	$s_nextRecordType = null;
@@ -32,7 +30,7 @@ try {
 				                                          'HostedZoneId' => $s_hostedZoneId,
 														  'StartRecordName' => $s_nextRecordName,
 														  'StartRecordType' => $s_nextRecordType,
-														  'MaxItems' => 100,
+														  'MaxItems' => MAX_AWS_FETCH_RESULTS,
 		                                                 )
 		                                );
 

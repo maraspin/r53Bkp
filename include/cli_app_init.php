@@ -15,6 +15,8 @@ require 'vendor/autoload.php';
 // Upload/download to S3 is aborted after this number of attempts
 define('EXPIRE_AFTER_ATTEMPTS', 10);
 
+define('MAX_AWS_FETCH_RESULTS', 50);
+
 // HostedZone To Be Backed Up/Restored
 $s_hostedZone = null;
 
