@@ -2,3 +2,4 @@
 .project
 .settings/
 vendor
+include/aws_conf.php
