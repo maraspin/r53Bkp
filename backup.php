@@ -13,6 +13,11 @@ try {
 
 	include('include/cli_app_init.php');
 
+	if (file_exists($s_localFile) &&
+	!$b_forceFileOverWrite) {
+		throw new \Exception("File " . $s_localFile . " exists. Use -o option to overwrite");
+	}
+
 	$am_hostedZone = $I_r53->getHostedZone(array('Id' => $s_hostedZoneId));
 	$i_recordCount = $am_hostedZone['HostedZone']['ResourceRecordSetCount'];
 
@@ -52,6 +57,7 @@ try {
 
 			}
 		}
+
 	}
 
 	$s_bkpData = json_encode($am_output);

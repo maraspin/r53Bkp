@@ -15,7 +15,7 @@ require_once __DIR__.'/r53S3Bkp.php';
 // Where shall R53 backups be saved within S3 if no custom parameter is provided?
 define('S3_DEFAULT_BUCKET_PATH', 'Route53Backup');
 
-// R53 SDK setting (max num of records to be returned for each request)
+// R53 SDK setting - max num of records to be returned for each request (100 MAX!)
 define('MAX_AWS_FETCH_RESULTS', 50);
 
 // Domain name to be Backed Up/Restored
@@ -87,11 +87,6 @@ if ( null === $s_domainName ||
    ) {
 	echo $s_message;
 	exit;
-}
-
-if (file_exists($s_localFile) &&
-	!$b_forceFileOverWrite) {
-	throw new \Exception("File " . $s_localFile . " exists. Use -o option to overwrite");
 }
 
 $s_confFile = __DIR__ . '/aws_conf.php';
