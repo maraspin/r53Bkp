@@ -1,3 +1,5 @@
 <?php
 
+// Rename this file to aws_conf.php
+
 return array('key' => 'KEY_HERE', 'secret'=>'SECRET_HERE');
