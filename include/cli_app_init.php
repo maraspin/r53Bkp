@@ -8,28 +8,22 @@
 /////////////////////////////////////////////
 
 use Aws\Route53\Route53Client as R53;
-use Aws\S3\S3Client as S3;
 
-require 'vendor/autoload.php';
+require_once 'vendor/autoload.php';
+require_once __DIR__.'/r53S3Bkp.php';
 
-// Upload/download to S3 is aborted after this number of attempts
-define('EXPIRE_AFTER_ATTEMPTS', 10);
-
-// R53 SDK setting
-define('MAX_AWS_FETCH_RESULTS', 50);
-
-// Where shall R53 backups be saved if no custom parameter is provided?
+// Where shall R53 backups be saved within S3 if no custom parameter is provided?
 define('S3_DEFAULT_BUCKET_PATH', 'Route53Backup');
 
-// HostedZone To Be Backed Up/Restored
+// R53 SDK setting (max num of records to be returned for each request)
+define('MAX_AWS_FETCH_RESULTS', 50);
+
+// Domain name to be Backed Up/Restored
 $s_domainName = null;
 
 // If S3 is used for the backup, we upload/download backup to/from this bucket/location
 $s_backupBucket = null;
 $s_locationWithinBucket = S3_DEFAULT_BUCKET_PATH;
-
-// Shall script run output be verbose?
-$b_debugMode = false;
 
 // Shall existing files be overwritten?
 $b_forceFileOverWrite = false;
@@ -107,8 +101,10 @@ if (!file_exists($s_confFile) ||
 	     $s_confFile . ".dist to " . $s_confFile . " and set your AWS credentials\n";
 }
 
+
 $as_credentials = include($s_confFile);
 $I_r53 = R53::factory($as_credentials);
+
 
 // Hosted Zone ID for selected domain is looked up
 $am_hostedZones = $I_r53->listHostedZones();
@@ -123,3 +119,10 @@ foreach ($am_hostedZones['HostedZones'] as $am_currentHostedZone) {
 if (!$b_resultFound) {
 	throw new DomainException('Domain ' . $s_domainName . ' not found');
 }
+
+
+if (substr($s_locationWithinBucket,-1) != '/') {
+	$s_locationWithinBucket .= '/';
+}
+
+$s_locationWithinBucket .= $s_domainName;
