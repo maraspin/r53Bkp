@@ -2,7 +2,7 @@
 
 /////////////////////////////////////////////
 //
-// Simple Route 53 Backup Script
+// Simple Route 53 Backup/Restore  Script
 // s.maraspin@mvassociati.it - 28/01/2014
 //
 /////////////////////////////////////////////
@@ -15,14 +15,18 @@ require 'vendor/autoload.php';
 // Upload/download to S3 is aborted after this number of attempts
 define('EXPIRE_AFTER_ATTEMPTS', 10);
 
+// R53 SDK setting
 define('MAX_AWS_FETCH_RESULTS', 50);
 
+// Where shall R53 backups be saved if no custom parameter is provided?
+define('S3_DEFAULT_BUCKET_PATH', 'Route53Backup');
+
 // HostedZone To Be Backed Up/Restored
-$s_hostedZone = null;
+$s_domainName = null;
 
 // If S3 is used for the backup, we upload/download backup to/from this bucket/location
 $s_backupBucket = null;
-$s_locationWithinBucket = null;
+$s_locationWithinBucket = S3_DEFAULT_BUCKET_PATH;
 
 // Shall script run output be verbose?
 $b_debugMode = false;
@@ -47,11 +51,6 @@ for ($x = 0; $x < $i_argv; $x++) {
 			$b_forceFileOverWrite = true;
 			break;
 
-		case '-d':
-		case '--debug':
-			$b_debugMode = true;
-			break;
-
 		case '-o':
 		case '--outputFile':
 			$s_localFile = $argv[$x+1];
@@ -70,26 +69,28 @@ for ($x = 0; $x < $i_argv; $x++) {
 			$x++;
 			break;
 
-		case '-z':
-		case '--zone':
-			$s_hostedZone = $argv[$x+1];
+		case '-d':
+		case '--domain':
+			$s_domainName = $argv[$x+1];
 			$x++;
 			break;
 
 		default:
 			if ($x > 0) {
-				echo "Valid params for ".$argv[0]." are: --zone [--outputfile | --bucket --location] --debug --force\n";
+				echo "Valid params for ".$argv[0]." are: --domain [--outputfile |" .
+				     " --bucket --location=" . S3_DEFAULT_BUCKET_PATH .
+				     "] --force\n";
 				exit;
 			}
 
 	}
 }
 
-if ( null === $s_hostedZone ||
-    (null == $s_localFile && null == $s_backupBucket) ||
-    (null != $s_localFile && null != $s_backupBucket)
+if ( null === $s_domainName ||
+    (null == $s_localFile && null == $s_backupBucket)
    ) {
-	echo "Usage: ".$argv[0]." -z hostedZone [-d -f][-o fileName| -b bucket [-l locationWithinBucket]]\n";
+	echo "Valid params for ".$argv[0]." are: --domain [--outputfile | --bucket --location=" .
+	     S3_DEFAULT_BUCKET_PATH . "] --force\n";
 	exit;
 }
 
@@ -98,33 +99,26 @@ if (file_exists($s_localFile) &&
 	throw new \Exception("File " . $s_localFile . " exists. Use -f option to overwrite");
 }
 
-if (null === $s_locationWithinBucket) {
-	$s_locationWithinBucket = 'Route53Backup';
-}
-
 $s_confFile = __DIR__ . '/aws_conf.php';
 if (!file_exists($s_confFile) ||
     !is_array(include($s_confFile))) {
-	echo "AWS Credentials not found. Please make sure you create file " . $s_confFile .
-	     ", containing the following:\n\n<?php\nreturn array('key' => 'YOUR_KEY', 'secret'=>'YOUR_SECRET');\n\n";
+	echo "AWS Credentials not found. Please make sure you rename file " .
+	     $s_confFile . ".dist to " . $s_confFile . " and set your AWS credentials\n";
 }
 
 $as_credentials = include($s_confFile);
-
-$I_s3 = S3::factory($as_credentials);
 $I_r53 = R53::factory($as_credentials);
 
+// Hosted Zone ID for selected domain is looked up
 $am_hostedZones = $I_r53->listHostedZones();
 $b_resultFound = false;
 foreach ($am_hostedZones['HostedZones'] as $am_currentHostedZone) {
-	if ($am_currentHostedZone['Name'] == $s_hostedZone.".") {
+	if ($am_currentHostedZone['Name'] == $s_domainName.".") {
 		$s_hostedZoneId = $am_currentHostedZone['Id'];
 		$b_resultFound = true;
 	}
 }
 
 if (!$b_resultFound) {
-	throw new DomainException('Domain ' . $s_hostedZone . ' not found');
+	throw new DomainException('Domain ' . $s_domainName . ' not found');
 }
-
-
