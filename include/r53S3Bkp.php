@@ -95,8 +95,13 @@ class r53S3Bkp {
 	}
 
 
-	private function getLatestBackupFileName() {
+	private function getLatestBackupFileName($s_bucket, $s_location) {
 
+		$as_items = $this->I_s3->listObjects();
+		sort($as_items);
+		$as_fileNameParts = explode("/",array_pop($as_items));
+
+		return array_pop($as_fileNameParts);
 	}
 
 }
