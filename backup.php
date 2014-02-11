@@ -8,7 +8,6 @@
 /////////////////////////////////////////////
 
 use Aws\Route53\Route53Client as R53;
-use Aws\S3\S3Client as S3;
 
 try {
 
